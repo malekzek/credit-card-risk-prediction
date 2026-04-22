@@ -1,75 +1,182 @@
-# Credit Risk Prediction (Beginner Starter)
+# Credit Risk Prediction System (Home Credit)
 
-This is a beginner-friendly machine learning starter project built on the Home Credit CSV files.
+This repository is a beginner-friendly, end-to-end machine learning project for credit default risk prediction.
 
-## What this version does
+It is written as a tutorial-style project, so you can learn each stage of a real tabular ML workflow:
 
-- Trains a **baseline credit risk model** using `data/raw/application_train.csv`
-- Builds applicant-level aggregated features from secondary tables (`bureau`, `previous_application`, `installments`, `POS_CASH`, `credit_card`, `bureau_balance`)
-- Evaluates the model using **ROC-AUC**
-- Saves trained model to `outputs/models/`
-- Generates prediction file for `data/raw/application_test.csv`
+1. Data loading and feature engineering
+2. Baseline model training
+3. Cross-validation and model comparison
+4. Explainability with SHAP
+5. Inference API for deployment
 
-> Note: Training and prediction now use cached aggregated features from secondary tables.
+## Project status
 
-## Project structure
+This version is complete and GitHub-ready.
+
+Implemented in this version:
+
+- Baseline training pipeline with applicant + aggregated secondary-table features
+- Stratified CV metrics and model comparison (HGB, LightGBM, CatBoost)
+- Explainability report generation (CatBoost default)
+- FastAPI prediction service
+- Docker deployment files
+
+## Who this is for
+
+- Beginners learning practical ML project structure
+- Portfolio project for data science and ML engineering
+- Users who want both notebooks (learning) and scripts (reproducible runs)
+
+## Repository structure
 
 ```text
 home-credit-default-risk/
   data/
-    raw/
-      application_train.csv
-      application_test.csv
-      ... other source CSV files ...
-    processed/
-      (future engineered datasets)
+    raw/                  # Place original Kaggle/Home Credit CSV files here (not committed)
+    processed/            # Cached engineered tables (not committed)
   notebooks/
     01_starter_overview.ipynb
+  outputs/
+    models/               # Trained model artifacts (not committed)
+    predictions/          # Submission/prediction CSVs (not committed)
+  reports/                # Generated JSON/CSV/figures (mostly not committed)
   src/
     credit_risk/
+      api.py
       config.py
       data.py
+      data_quality.py
+      explainability.py
       features.py
+      model_compare.py
+      predict.py
       secondary_features.py
       train.py
-      predict.py
-  outputs/
-    models/
-    predictions/
-  reports/
   build_aggregated_features.py
-  train_baseline.py
+  compare_models.py
+  generate_data_report.py
+  generate_explainability_report.py
   predict_baseline.py
+  serve_api.py
+  train_baseline.py
+  Dockerfile
   requirements.txt
 ```
 
-## Setup
+## Important note about data
 
-1. Create and activate a virtual environment (recommended).
-2. Install dependencies:
+The dataset CSV files are ignored in Git because they are large.
+
+Before running anything, copy your Home Credit CSV files into:
+
+- data/raw/application_train.csv
+- data/raw/application_test.csv
+- data/raw/bureau.csv
+- data/raw/bureau_balance.csv
+- data/raw/credit_card_balance.csv
+- data/raw/installments_payments.csv
+- data/raw/POS_CASH_balance.csv
+- data/raw/previous_application.csv
+- data/raw/sample_submission.csv
+- data/raw/HomeCredit_columns_description.csv
+
+## Environment setup
+
+1. Create and activate a virtual environment.
+2. Install dependencies.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run API locally
+## Tutorial workflow (recommended order)
 
-Train the baseline model first (required once):
+### Step 1) Build aggregated features cache
+
+```bash
+python build_aggregated_features.py --force
+```
+
+### Step 2) Train baseline model
 
 ```bash
 python train_baseline.py
 ```
 
-Then start the API:
+Outputs:
+
+- outputs/models/baseline_hgb.joblib
+- reports/baseline_metrics.json
+
+### Step 3) Generate baseline predictions
+
+```bash
+python predict_baseline.py
+```
+
+Output:
+
+- outputs/predictions/submission_baseline.csv
+
+### Step 4) Run model comparison
+
+```bash
+python compare_models.py
+```
+
+Outputs:
+
+- reports/model_comparison.json
+- reports/model_comparison.csv
+
+### Step 5) Generate explainability report
+
+Default (CatBoost explainer):
+
+```bash
+python generate_explainability_report.py
+```
+
+Optional:
+
+```bash
+python generate_explainability_report.py --model catboost
+python generate_explainability_report.py --model lightgbm
+python generate_explainability_report.py --model auto
+```
+
+Outputs:
+
+- reports/explainability_summary.json
+- reports/explainability_top_features.csv
+- reports/figures/shap_summary_bar.png
+
+### Step 6) Generate data quality report
+
+```bash
+python generate_data_report.py
+```
+
+Outputs:
+
+- reports/data_quality_report.json
+- reports/application_train_missingness.csv
+- reports/application_train_dtypes.csv
+
+## Run the API locally
+
+Start server:
 
 ```bash
 uvicorn serve_api:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Useful endpoints:
-- `GET /health`
-- `GET /schema`
-- `POST /predict`
+Endpoints:
+
+- GET /health
+- GET /schema
+- POST /predict
 
 Example request:
 
@@ -79,7 +186,7 @@ curl -X POST "http://127.0.0.1:8000/predict" \
   -d '{"records":[{"EXT_SOURCE_2":0.7,"EXT_SOURCE_3":0.6,"AMT_CREDIT":500000}]}'
 ```
 
-## Deploy API with Docker
+## Deploy with Docker
 
 Build image:
 
@@ -93,7 +200,7 @@ Run container:
 docker run --rm -p 8000:8000 credit-risk-api
 ```
 
-Optional model override path:
+Optional model override:
 
 ```bash
 docker run --rm -p 8000:8000 \
@@ -101,107 +208,33 @@ docker run --rm -p 8000:8000 \
   credit-risk-api
 ```
 
-## Run training
+## Notebook usage
 
-Optional (build feature caches explicitly):
+Use notebooks/01_starter_overview.ipynb for exploration and learning.
 
-```bash
-python build_aggregated_features.py --force
-```
+Use src scripts for reproducible pipeline runs.
 
-Then train:
+## Metrics note for beginners
 
-```bash
-python train_baseline.py
-```
+- TARGET = 1 means higher default risk.
+- ROC-AUC near 1.0 is better; 0.5 is random-like ranking.
+- SHAP mean_abs_shap ranks feature impact magnitude on model output.
 
-This will:
-- print fold-wise and mean ROC-AUC from stratified cross-validation
-- save model to `outputs/models/baseline_hgb.joblib`
-- save metrics to `reports/baseline_metrics.json`
+## GitHub push commands
 
-## Run prediction
-
-```bash
-python predict_baseline.py
-```
-
-This will save:
-- `outputs/predictions/submission_baseline.csv`
-
-## Compare models (HGB vs LightGBM vs CatBoost)
-
-```bash
-python compare_models.py
-```
-
-This will save:
-- `reports/model_comparison.json`
-- `reports/model_comparison.csv`
-
-## Generate SHAP explainability report
-
-```bash
-python generate_explainability_report.py
-```
-
-By default, this runs the CatBoost explainer.
-
-Optional (choose explainability backend):
-
-```bash
-python generate_explainability_report.py --model catboost
-python generate_explainability_report.py --model lightgbm
-python generate_explainability_report.py --model auto
-```
-
-Notes:
-- `--model auto` picks the winner from `reports/model_comparison.csv`.
-- If auto selects an unsupported explainer (for example `hist_gradient_boosting`), it falls back to CatBoost.
-
-This will save:
-- `reports/explainability_summary.json`
-- `reports/explainability_top_features.csv`
-- `reports/figures/shap_summary_bar.png`
-
-## Run data quality report (next step)
-
-```bash
-python generate_data_report.py
-```
-
-This will save:
-- `reports/data_quality_report.json`
-- `reports/application_train_missingness.csv`
-- `reports/application_train_dtypes.csv`
-
-## Should this be a notebook project?
-
-For data science, using notebooks is a good idea for exploration and learning.
-
-- Use notebooks for EDA, quick experiments, and visualizations.
-- Use Python modules/scripts in `src/` for reusable training and prediction pipelines.
-
-This project uses both: notebook for learning + scripts for reliable runs.
-
-## Beginner notes
-
-- `TARGET = 1` means higher repayment/default risk in this dataset context.
-- ROC-AUC closer to `1.0` is better; `0.5` means random-like ranking.
-- This baseline is intentionally simple so you can understand each step.
-
-## Next planned improvements
-
-1. Add hyperparameter tuning and experiment tracking.
-2. Add model monitoring and drift checks.
-
-## Push to GitHub
+If starting from scratch on a new machine:
 
 ```bash
 git init
 git add .
-git commit -m "Add credit risk pipeline, explainability, and deployment API"
+git commit -m "Initial commit: credit risk pipeline"
 git branch -M main
 git remote add origin <YOUR_GITHUB_REPO_URL>
 git push -u origin main
 ```
+
+## Next improvements
+
+1. Hyperparameter tuning and experiment tracking
+2. Model monitoring and drift checks
+3. CI workflow (tests + lint on pull requests)
