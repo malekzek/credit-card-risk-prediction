@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+.git/
+.vscode/
+notebooks/
+catboost_info/
+data/raw/
+data/processed/
+outputs/predictions/
+reports/

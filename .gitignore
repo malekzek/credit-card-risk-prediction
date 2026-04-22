@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+.vscode/
+catboost_info/
+outputs/models/*.joblib
+outputs/predictions/*.csv
+reports/*.json
+reports/*.csv
+reports/figures/
+data/raw/*.csv
+data/processed/*.pkl
