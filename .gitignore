@@ -9,6 +9,11 @@ outputs/models/*.joblib
 outputs/predictions/*.csv
 reports/*.json
 reports/*.csv
-reports/figures/
+reports/figures/*
+!reports/figures/
+!reports/figures/pipeline_overview.png
+!reports/figures/model_comparison_auc.png
+!reports/figures/data_quality_overview.png
+!reports/figures/shap_summary_bar.png
 data/raw/*.csv
 data/processed/*.pkl

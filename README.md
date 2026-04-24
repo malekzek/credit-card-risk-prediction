@@ -19,6 +19,7 @@ Implemented in this version:
 - Baseline training pipeline with applicant + aggregated secondary-table features
 - Stratified CV metrics and model comparison (HGB, LightGBM, CatBoost)
 - Explainability report generation (CatBoost default)
+- Portfolio-ready matplotlib figures (pipeline, model comparison, data quality, SHAP)
 - FastAPI prediction service
 - Docker deployment files
 
@@ -51,12 +52,14 @@ home-credit-default-risk/
       features.py
       model_compare.py
       predict.py
+        report_figures.py
       secondary_features.py
       train.py
   build_aggregated_features.py
   compare_models.py
   generate_data_report.py
   generate_explainability_report.py
+      generate_project_figures.py
   predict_baseline.py
   serve_api.py
   train_baseline.py
@@ -163,6 +166,37 @@ Outputs:
 - reports/data_quality_report.json
 - reports/application_train_missingness.csv
 - reports/application_train_dtypes.csv
+
+### Step 7) Generate presentation figures (matplotlib)
+
+```bash
+python generate_project_figures.py
+```
+
+Outputs:
+
+- reports/figures/pipeline_overview.png
+- reports/figures/model_comparison_auc.png
+- reports/figures/data_quality_overview.png
+- reports/figures/shap_summary_bar.png
+
+## Project figures
+
+End-to-end pipeline overview:
+
+![Pipeline overview](reports/figures/pipeline_overview.png)
+
+Model comparison (3-fold CV ROC-AUC):
+
+![Model comparison ROC-AUC](reports/figures/model_comparison_auc.png)
+
+Data quality overview (class balance + missingness):
+
+![Data quality overview](reports/figures/data_quality_overview.png)
+
+Explainability summary (SHAP mean absolute impact):
+
+![SHAP summary bar](reports/figures/shap_summary_bar.png)
 
 ## Run the API locally
 
